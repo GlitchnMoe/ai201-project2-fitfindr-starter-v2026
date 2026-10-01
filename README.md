@@ -41,8 +41,6 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
-
-
 ---
 
 ## Tool Inventory
@@ -59,24 +57,24 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** This tool searches the local clothing catalogue by description keywords with optional size and maximum price filters.
+- **Inputs:** description: str, size: str | None = None, max_price: float |None = None <!-- name and type each: `max_price` (float), not "a price" -->
+- **Returns:** A list of matching listing dictionaries, ranked by keyword match and then a lower price, each listing dictionary includes fields id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), and platform
+- **When it has nothing:** Returns an empty list `[]`
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggests two outfits built around a selected listing, using items from the user's wardrobe when available.
+- **Inputs:** new_item: dict (a listing), wardrobe: dict (with an items list)
+- **Returns:** A non-empty string with two outfit suggestions, when the wardrobe has items, it names those pieces as written. 
+- **When it has nothing:** With an empty wardrobe, returns general styling advice rather than raising or returning "".
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Writes a short social-media-style caption about the selected second-hand find and how it could be worn. 
+- **Inputs:** outfit: str, new_item: dict (a listing)
+- **Returns:** A string of two to four sentences that includes the price written with digits and the selling platform.
+- **When it has nothing:** If outfit is empty or whitespace, returns a helpful fallback message instead of calling the model or raising an exception.
 
 ---
 
@@ -93,13 +91,13 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** After search_listings runs, the loop checks session["search_results"]. If the list is empty, it puts a helpful message in session["error"] telling the user what they could change in their search and returns the session without calling suggest_outfit. If results were found, it takes the first listing, stores it in session["selected_item"], and continues to suggest_outfit.
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** The query will be parsed with regular expressions. The parser will look for a price phrase such as under $30 and store the number as max_price, and look for a size phrase such as size M or size XXS and store that value as size. Those filter phrases will then be removed from the query, and the remaining text will be used as the description. If no size or maximum price is present, that value will be None. The three parsed values will be stored in session["parsed"]. <!-- regex, string splitting, or asking the model — say which -->
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** The original query and wardrobe start in the session. The parsed description, size, and max_price are stored in session["parsed"] and used to call search_listings. Its full return value is stored in session["search_results"]. If results exist, the first result is stored in session["selected_item"] and passed with session["wardrobe"] to suggest_outfit. That result is stored in session["outfit_suggestion"] and then passed with session["selected_item"] to create_fit_card. The final caption is stored in session["fit_card"]. If the search returns nothing, session["error"] is set and the run stops before the later tools are called. <!-- which fields, in what order -->
 
 ---
 
