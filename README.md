@@ -43,6 +43,8 @@
 
 ---
 
+FitFindr takes a plain-language request for a second-hand clothing item and parses it into a description, optional size, and optional maximum price. It searches the local listings catalogue and, when a match is found, selects the first result and uses the user's wardrobe to generate two outfit suggestions around that item. It then creates a short social-media-style fit card that includes the item's price and selling platform. If no listings match, the agent stops before generating an outfit and tells the user what parts of the search they can change.
+
 ## Tool Inventory
 
 <!-- Four lines per tool. This is worth 2 points and it's the single most
@@ -199,15 +201,15 @@ Nothing beats a classic pair of vintage Levi's 501 jeans, especially when they c
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked AI how to implement the size filter in search_listings without using a plain substring match, because the starter warned that a search for S could accidentally match US 9 and L could match XL.
+- *What came back:* AI suggested using a regular-expression-based size helper that treats the requested size as a complete size label or component, so M can match M or S/M without matching unrelated text.
+- *What I changed:* I added a _size_matches() helper to tools.py and used it when the optional size filter is provided instead of using a simple in substring check.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked AI to help check the query parsing and empty-search branch in run_agent() using the test query designer ballgown size XXS under $5.
+- *What came back:* The first test showed max_price as None because PowerShell removed $5 before Python received the query. AI identified that the shell, not the parser, was causing the problem and suggested constructing the dollar sign with chr(36) for the test command.
+- *What I changed:* I changed the terminal test command and ran it again. The session then correctly showed size as XXS, max_price as 5.0, an empty search_results list, fit_card still set to None, and a helpful error message, so I did not change the working branch logic.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
