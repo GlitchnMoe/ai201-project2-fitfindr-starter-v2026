@@ -280,34 +280,40 @@ that produced it:
 
 ## Loop Trace
 
-<!-- One full run, printed step by step, with the MCP call visible in it.
-
-     `python app.py ask '...' --trace` once you've added the trace.step()
-     calls in Milestone 2.
-
-     Worth pasting BOTH the happy path and the empty-search path. The empty
-     one should be visibly shorter, because it stops. If your two traces are
-     the same length, your branch isn't working — and this is the fastest way
-     anyone will ever find that out. -->
-
 **Happy path**
 
-```
-
+```text
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Vintage Band Tee — Faded Grey, Graphic Tee — 2003 Tour Bootleg Style … +7 more
+      →    results found, continuing
+[3] select_item
+      in:  10 items: Y2K Baby Tee — Butterfly Print, Vintage Band Tee — Faded Grey, Graphic Tee — 2003 Tour Bootleg Style … +7 more
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are two fun, Y2K-inspired outfit ideas built around your new butterfly baby tee, using pieces straight fr…
+[5] create_fit_card
+      in:  dict with keys: outfit, new_item
+      out: Fly into the Y2K aesthetic with this super cute vintage butterfly baby tee, up on my depop now for just $18! S…
 ```
 
 **Empty search**
 
+```text
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+      →    branch: empty search, stopping
 ```
 
-```
-
-**On the MCP move:** <!-- what changed in your code, and whether anything
-behaved differently afterwards. If the rewire didn't work, say exactly where it
-broke — the error text and the last thing that worked. That earns the point in
-full. -->
-
-
+**On the MCP move:** I registered `search_listings` in `mcp_server.py` with its description and typed inputs, then changed `run_agent()` so it calls the tool through `mcp_client.call_tool()` instead of importing and calling `search_listings` directly. The returned search results kept the same shape, so the rest of the planning loop behaved the same after the move. The main visible difference in the trace is that the search step is now labeled `search_listings (via MCP)`.
 
 ---
 
