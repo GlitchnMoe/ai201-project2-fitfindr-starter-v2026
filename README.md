@@ -229,19 +229,78 @@ Nothing beats a classic pair of vintage Levi's 501 jeans, especially when they c
      `python run_eval.py --label before` runs everything and writes the table
      into results/. Paste it here and fill in the verdicts. -->
 
+## Run Log Before
+
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Full three-tool run returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Empty search stops before `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item matches item passed to `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card is 2–4 sentences and includes price and platform | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Size and maximum price are parsed correctly | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Real output from one try**, pasted as text, naming the file and function
-that produced it:
+### Real output from one try
 
+The runs below were produced by `run_eval.py::main`, which executed `agent.py::run_agent`.
+
+**Criterion 1 — full three-tool run returns a fit card**
+
+```text
+- stopped early: no
+- selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+- search_results: 10
+
+[2] search_listings (via MCP)
+      →    results found, continuing
+[3] select_item
+      →    selected_item id=lst_002
+[4] suggest_outfit
+      →    received selected_item id=lst_002
+[5] create_fit_card
+      out: Living out my early 2000s dreams in this super cute butterfly baby tee, up now on depop for just $18! Style it…
 ```
 
+**Criterion 2 — empty search stops before `suggest_outfit`**
+
+```text
+- stopped early: yes — No listings matched your search. Try changing the item description, choosing a different size, or increasing your maximum price.
+- selected_item: (none)
+- search_results: 0
+
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: dict with keys: description, size, max_price
+      →    size='XXS', max_price=5.0
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+      →    branch: empty search, stopping
+```
+
+**Criterion 3 — selected item matches item passed to `suggest_outfit`**
+
+```text
+[3] select_item
+      out: Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+      →    selected_item id=lst_007
+[4] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      →    received selected_item id=lst_007
+```
+
+**Criterion 4 — fit card is 2–4 sentences and includes price and platform**
+
+```text
+Living out my early 2000s dreams in this super cute Y2K butterfly baby tee, up for grabs on depop for just $18! I love styling it with baggy jeans and a zip hoodie for that classic, effortlessly cool streetwear vibe. Grab it before it's gone! 🦋✨
+```
+
+**Criterion 5 — size and maximum price are parsed correctly**
+
+```text
+[1] parse_query
+      in:  vintage graphic tee size M under $30
+      out: dict with keys: description, size, max_price
+      →    size='M', max_price=30.0
 ```
 
 ---

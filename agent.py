@@ -79,79 +79,10 @@ def _parse_query(query: str) -> dict:
 
 # ── planning loop ─────────────────────────────────────────────────────────────
 
-# def run_agent(query: str, wardrobe: dict) -> dict:
-#     """
-#     Run the planning loop once and return the finished session.
-#     """
-#     session = new_session(query, wardrobe)
-
-#     iteration_count = 0
-
-#     while True:
-#         iteration_count += 1
-#         trace.check_iterations(iteration_count)
-
-#         # Step 1: Parse the user's query.
-#         if not session["parsed"]:
-#             session["parsed"] = _parse_query(session["query"])
-#             continue
-
-#         # Step 2: Search and branch on the result.
-#         if session["selected_item"] is None:
-#             session["search_results"] = call_tool(
-#                 "search_listings",
-#                 {
-#                     "description": session["parsed"]["description"],
-#                     "size": session["parsed"]["size"],
-#                     "max_price": session["parsed"]["max_price"],
-#                 },
-#             )
-
-#             # This is the required branch.
-#             if not session["search_results"]:
-#                 session["error"] = (
-#                     "No listings matched your search. Try changing the item "
-#                     "description, choosing a different size, or increasing "
-#                     "your maximum price."
-#                 )
-#                 return session
-
-#             # Read the result back out of the session.
-#             session["selected_item"] = session["search_results"][0]
-#             continue
-
-#         # Step 3: Generate an outfit using the selected item from the session.
-#         if session["outfit_suggestion"] is None:
-#             try:
-#                 session["outfit_suggestion"] = suggest_outfit(
-#                     session["selected_item"],
-#                     session["wardrobe"],
-#                 )
-#             except ModelUnavailable as exc:
-#                 session["error"] = (
-#                     f"The styling model couldn't be reached. {exc}"
-#                 )
-#                 return session
-
-#             continue
-
-#         # Step 4: Generate the fit card using values from the session.
-#         if session["fit_card"] is None:
-#             try:
-#                 session["fit_card"] = create_fit_card(
-#                     session["outfit_suggestion"],
-#                     session["selected_item"],
-#                 )
-#             except ModelUnavailable as exc:
-#                 session["error"] = (
-#                     f"The styling model couldn't be reached. {exc}"
-#                 )
-#                 return session
-
-#             return session
-
 def run_agent(query: str, wardrobe: dict) -> dict:
-    """Run the planning loop once and return the finished session."""
+    """
+    Run the planning loop once and return the finished session.
+    """
     session = new_session(query, wardrobe)
 
     iteration_count = 0
@@ -160,7 +91,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         iteration_count += 1
         trace.check_iterations(iteration_count)
 
-        # Step 1: Parse query.
+        # Step 1: Parse the user's query.
         if not session["parsed"]:
             session["parsed"] = _parse_query(session["query"])
 
@@ -168,10 +99,14 @@ def run_agent(query: str, wardrobe: dict) -> dict:
                 "parse_query",
                 inputs=session["query"],
                 returned=session["parsed"],
+                note=(
+                    f"size={session['parsed']['size']!r}, "
+                    f"max_price={session['parsed']['max_price']!r}"
+                ),
             )
             continue
 
-        # Step 2: Search through MCP.
+        # Step 2: Search through MCP and branch on the result.
         if session["selected_item"] is None:
             search_inputs = {
                 "description": session["parsed"]["description"],
@@ -184,6 +119,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
                 search_inputs,
             )
 
+            # Required empty-search branch.
             if not session["search_results"]:
                 trace.step(
                     "search_listings (via MCP)",
@@ -206,16 +142,18 @@ def run_agent(query: str, wardrobe: dict) -> dict:
                 note="results found, continuing",
             )
 
+            # Read the first result back out of the session.
             session["selected_item"] = session["search_results"][0]
 
             trace.step(
                 "select_item",
                 inputs=session["search_results"],
                 returned=session["selected_item"],
+                note=f"selected_item id={session['selected_item'].get('id')}",
             )
             continue
 
-        # Step 3: Suggest outfit.
+        # Step 3: Generate an outfit using the selected item.
         if session["outfit_suggestion"] is None:
             try:
                 session["outfit_suggestion"] = suggest_outfit(
@@ -230,6 +168,10 @@ def run_agent(query: str, wardrobe: dict) -> dict:
                         "wardrobe": session["wardrobe"],
                     },
                     returned=session["outfit_suggestion"],
+                    note=(
+                        "received selected_item "
+                        f"id={session['selected_item'].get('id')}"
+                    ),
                 )
 
             except ModelUnavailable as exc:
@@ -251,7 +193,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 
             continue
 
-        # Step 4: Create fit card.
+        # Step 4: Generate the fit card.
         if session["fit_card"] is None:
             try:
                 session["fit_card"] = create_fit_card(
