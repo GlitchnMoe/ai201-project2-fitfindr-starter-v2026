@@ -305,8 +305,6 @@ Living out my early 2000s dreams in this super cute Y2K butterfly baby tee, up f
 
 ---
 
-## Verdicts and Diagnoses
-
 <!-- MET or MISSED per criterion against LAST UNIT's target, plus a sentence on
      how you decided.
 
@@ -323,17 +321,27 @@ Living out my early 2000s dreams in this super cute Y2K butterfly baby tee, up f
      Look for a pattern. Three misses on the same tool is one problem, not
      three. -->
 
+## Verdicts and Diagnoses
+
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Given a query that matches at least one listing, the agent completes all three tool calls and returns a fit card. | 4 of 5 | MET (5/5) | All five tries completed `search_listings`, `suggest_outfit`, and `create_fit_card`, and each returned a fit card. |
+| 2 | Given a query that matches no listings, the agent stops before calling `suggest_outfit` and returns a message naming what to change. | 5 of 5 | MET (5/5) | All five impossible-query tries returned an empty search result, stopped at the branch before `suggest_outfit`, and returned the message telling the user what they could change. |
+| 3 | Given a query that returns at least one listing, the item stored in `session["selected_item"]` has the same id as the item passed into `suggest_outfit`. | 5 of 5 | MET (5/5) | In all five tries, the trace showed `selected_item id=lst_007` and then showed `suggest_outfit` receiving `selected_item id=lst_007`. |
+| 4 | Given a successful run, `session["fit_card"]` contains 2–4 sentences and includes both the selected listing's price written with digits and its platform name. | 4 of 5 | MET (5/5) | All five fit cards were within the required sentence range and included the selected item's numeric price and platform name. |
+| 5 | Given a query that contains both a size and an `under $X` price limit, the agent stores the correct size and numeric maximum price in `session["parsed"]`. | 5 of 5 | MET (5/5) | All five traces for `vintage graphic tee size M under $30` showed `size='M'` and `max_price=30.0`. |
 
 **Diagnoses**
 
+None of the five acceptance criteria missed, so there were no criterion failures that required a step-and-mechanism diagnosis. I reached that conclusion by comparing each criterion exactly against the target that was written before the evaluation and then checking all five uncached tries. A criterion was only counted as MET when the required behavior held often enough to satisfy its original target; I did not lower or reinterpret any target after seeing the results.
 
+The strongest pattern was that the deterministic parts of the agent were completely stable. The empty-search branch passed 5 of 5 times: each impossible query returned an empty result, stopped before `suggest_outfit`, and produced the expected user-facing message. The session handoff also passed 5 of 5 times because the trace showed the same listing id being stored in `session["selected_item"]` and then passed into `suggest_outfit`. Query parsing was equally consistent, with every run of the size-and-price scenario producing `size='M'` and `max_price=30.0`. Because these behaviors are controlled by the loop and parser rather than model generation, the lack of variation is what I would expect from correct deterministic logic.
+
+The model-dependent criteria also passed every try. Criterion 1 required at least 4 of 5 successful full runs, but all five completed the complete path through search, outfit generation, and fit-card generation without stopping early. Criterion 4 also required only 4 of 5 because the fit card is model-generated and could vary, but all five outputs still stayed within the required 2–4 sentence range and included both the numeric listing price and the platform name. That is why I marked both model-dependent criteria MET at 5 of 5 rather than simply assuming that a successful tool call was enough.
+
+There were temporary model-service failures during the separate empty-wardrobe diagnostic, but that scenario was explicitly marked as a diagnostic and was not one of the five acceptance criteria. Those failures therefore did not count as misses against Criteria 1–5. They were still useful because they confirmed that the `ModelUnavailable` handler stops cleanly and returns an actionable message instead of crashing the program.
+
+The 4-of-5 targets for Criteria 1 and 4 were somewhat conservative, but they were still valid and measurable. I would not revise them after seeing the results because the purpose of the target is to define success before testing, not to make the criterion harder after it passes. If I were writing the criteria again for a future unit, I would tighten Criterion 4 to 5 of 5. The fit-card format held consistently across all five uncached runs, so requiring the correct sentence count, numeric price, and platform name every time would be a stronger standard while still appearing realistic based on this evaluation.
 
 ---
 
