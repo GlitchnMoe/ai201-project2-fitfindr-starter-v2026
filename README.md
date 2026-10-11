@@ -211,6 +211,12 @@ Nothing beats a classic pair of vintage Levi's 501 jeans, especially when they c
 - *What came back:* The first test showed max_price as None because PowerShell removed $5 before Python received the query. AI identified that the shell, not the parser, was causing the problem and suggested constructing the dollar sign with chr(36) for the test command.
 - *What I changed:* I changed the terminal test command and ran it again. The session then correctly showed size as XXS, max_price as 5.0, an empty search_results list, fit_card still set to None, and a helpful error message, so I did not change the working branch logic.
 
+**Moment 3**
+
+- **What I asked for:** I asked AI to compare the before and after evaluation results for `create_fit_card()` and determine whether the single prompt change actually improved anything without changing the acceptance criteria.
+- **What came back:** AI pointed out that Criterion 4 stayed at 5 of 5 in both runs, so the numerical score did not improve, but the after-run outputs were more consistent. The price and platform appeared immediately in the opening sentence, and the extra hashtag blocks that appeared in some before-run cards disappeared. AI also noted that two after-run cards still used two sentences instead of the requested three, so the prompt did not make the model fully deterministic.
+- **What I changed:** I kept the prompt change and documented the result honestly as a consistency improvement rather than claiming the acceptance score increased. I also left the original Criterion 4 unchanged because the two-sentence outputs still satisfied its original 2–4 sentence requirement.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
@@ -431,7 +437,17 @@ Overall, the improvement did not increase the numerical acceptance score because
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
 
+None of the five acceptance criteria are still missed after the improvement. All five criteria passed 5 of 5 tries in both the before and after evaluations.
 
+There are still limitations that the current criteria do not fully capture. The clearest one is that create_fit_card() does not always follow every formatting instruction exactly. In the after run, I changed the prompt to request exactly three sentences, but two of the five Criterion 4 outputs still returned only two sentences. Those outputs still passed the original acceptance criterion because it allows 2–4 sentences and they included the required numeric price and platform, but the model is not completely deterministic about following the tighter prompt.
+
+If I continued improving this, I would add validation after create_fit_card() that checks the sentence count and required fields instead of relying only on the prompt. If the generated card did not meet the expected structure, the tool could either retry once with a correction prompt or return a controlled fallback. I stopped here because Milestone 5 required making and measuring one change only, and adding validation would be a second separate improvement.
+
+A second limitation is model availability. During the earlier empty-wardrobe diagnostic, the model returned temporary 503 UNAVAILABLE errors because of high demand. The agent now handles that failure cleanly and gives the user an understandable message instead of crashing, but it cannot prevent an external model service from becoming unavailable. A future version could add a limited retry for temporary service errors, but that was outside the one-change scope of this improvement.
+
+## MCP Move
+
+I moved search_listings from a direct Python tool call to the MCP server and changed run_agent() to call it through mcp_client.call_tool(). The search results kept the same shape, so the rest of the planning loop behaved the same after the move. The main visible difference was that the trace now shows search_listings (via MCP) instead of a direct local call.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
