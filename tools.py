@@ -210,26 +210,27 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
         price_text = f"${price}"
 
     prompt = f"""
-Write a social-media-style caption about this second-hand find.
+    Write a social-media-style fit card for this second-hand clothing listing.
 
-Item: {new_item['title']}
-Description: {new_item['description']}
-Price: {price_text}
-Platform: {new_item['platform']}
-Style tags: {', '.join(new_item['style_tags'])}
+    Listing:
+    - title: {new_item.get("title")}
+    - price: {price}
+    - platform: {new_item.get("platform")}
 
-Outfit idea:
-{outfit}
+    Outfit suggestion:
+    {outfit}
 
-Requirements:
-- Write 2 to 4 sentences.
-- Make it sound like a real social-media post, not a product listing.
-- Mention the item.
-- Include the price exactly as {price_text}.
-- Mention {new_item['platform']} exactly once.
-- Describe the specific vibe of the outfit.
-- Do not use bullet points.
-""".strip()
+    Requirements:
+    - Write exactly 3 sentences.
+    - Sentence 1 must name the item and include both the exact price {price} and the platform name {new_item.get("platform")}.
+    - Sentences 2 and 3 should describe the styling or vibe from the outfit suggestion.
+    - Do not use bullet points.
+    - Do not add headings.
+    - Do not add hashtags.
+    - Keep it natural and suitable for a social media caption.
+
+    Return only the finished fit card.
+    """.strip()
 
     response = generate(
         prompt,

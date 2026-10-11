@@ -386,30 +386,41 @@ The 4-of-5 targets for Criteria 1 and 4 were somewhat conservative, but they wer
 
 ## The Improvement
 
-<!-- What you changed, why your diagnosis pointed at it, and the after-run in
-     the same table format. One change, measured properly.
-
-     `python run_eval.py --label after` -->
-
 **What I changed:**
 
+I changed only the prompt inside `create_fit_card()`. Before the change, the prompt allowed some flexibility in how the model structured the caption as long as it stayed within the required range and included the listing details. I made the instructions more explicit by requiring exactly three sentences, requiring the exact numeric price and platform name in the first sentence, and telling the model not to add headings, bullet points, or hashtags.
+
+No other part of the agent was changed. The search tool, MCP call, planning loop, branch logic, query parser, session state, and `suggest_outfit()` behavior all stayed the same.
+
 **Which failure it was meant to fix:**
+
+None of the five acceptance criteria actually failed in the before run, so this improvement was not aimed at repairing a missed criterion. The diagnosis from Milestone 4 showed that Criterion 4 was the most model-dependent and therefore the most likely place for future inconsistency.
+
+Criterion 4 passed 5 of 5 in the before run, but the actual fit-card outputs still varied in structure. Some included hashtags while others did not, and the model was free to choose anywhere from 2–4 sentences. The change was meant to make that output more predictable and make the required price, platform, and sentence structure harder for the model to omit.
+
+The goal of the improvement was therefore to reduce variation in `create_fit_card()` while preserving the already-passing behavior measured by Criterion 4.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Full three-tool run returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Empty search stops before `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item matches item passed to `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card is 2–4 sentences and includes price and platform | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Size and maximum price are parsed correctly | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Did it help, and how do I know:**
 
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
+Yes, the change helped, although the acceptance-criterion score itself stayed the same at 5 of 5. Before the change, Criterion 4 already passed all five tries, but the fit-card formatting still varied more than I wanted. Some outputs included hashtags and the model had more freedom in where it placed the price and platform information. For example, one of the before-run fit cards included a separate hashtag line after the caption.
 
+After rewriting only the `create_fit_card()` prompt, the outputs became more consistent. Every Criterion 4 fit card still contained the numeric price and platform name, and the required information consistently appeared immediately in the opening sentence. The outputs also stopped adding the extra hashtag blocks that appeared in some of the before-run cards. The first three Criterion 4 tries followed the new three-sentence structure exactly.  
+
+The change did not make the model perfectly deterministic. Tries 4 and 5 returned two sentences instead of the requested three. However, both still satisfied the original Criterion 4 requirement of 2–4 sentences and both still included the numeric price and platform. Because of that, Criterion 4 remained MET at 5 of 5. 
+
+The other four criteria also remained at 5 of 5, which is important because it shows that changing the `create_fit_card()` prompt did not break the search branch, session handoff, parser, or successful end-to-end path. Criterion 5, for example, continued to produce `size='M'` and `max_price=30.0` in all five tries. 
+
+Overall, the improvement did not increase the numerical acceptance score because the before run was already 5 of 5, but it reduced unnecessary formatting variation and made the required listing details more consistent without causing regressions elsewhere.
 
 
 ---
